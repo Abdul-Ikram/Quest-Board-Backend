@@ -14,14 +14,15 @@ from django.utils.timezone import now
 from rest_framework import status
 from rest_framework.response import Response
 from django.core.validators import validate_email
-from .helpers import generate_otp, send_email
+# from .helpers import generate_otp, send_email
+from .helpers import send_email
 from .serializers import RegisterSerializer, PasswordResetConfirmSerializer
 
 
 # Create your views here.
 
 # Health Check View:
-class HealthCheck(APIView):
+class HealthCheckView(APIView):
     permission_classes = [AllowAny]
 
     def get(self, request):
