@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('adminx', '0002_remove_user_apple_auth_remove_user_facebook_auth_and_more'),
+        ('authentication', '0002_remove_user_apple_auth_remove_user_facebook_auth_and_more'),
     ]
 
     operations = [
