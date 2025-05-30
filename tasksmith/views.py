@@ -62,7 +62,6 @@ class TaskDeleteView(APIView):
             'status_code': 200,
             'message': 'Task deleted successfully.',
             'data': {
-                "task_deleted_at": task.deleted_at,
                 "task_deleted_by": task.deleted_by,
             }
         }, status=status.HTTP_200_OK)
