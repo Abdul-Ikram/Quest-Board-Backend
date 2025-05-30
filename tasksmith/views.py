@@ -3,7 +3,7 @@ from rest_framework.views import APIView
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework import status
 from rest_framework.response import Response
-from .serializers import TaskUploadSerializer
+from .serializers import TaskUploadSerializer, GetTasksSerializer
 from authentication.permissions import IsTasksmith, IsAdminOrOwner
 from .models import TasksDetail
 from django.utils import timezone
@@ -41,6 +41,19 @@ class TaskUploadView(APIView):
             'message': 'Task upload failed',
             'errors': serializer.errors
         }, status=status.HTTP_400_BAD_REQUEST)
+
+class GetTaskView(APIView):
+    permission_classes = [IsAuthenticated, IsTasksmith]
+
+    def get(self, request):
+        tasks = TasksDetail.objects.filter(user=request.user, deleted_at__isnull=True)
+        serializer = GetTasksSerializer(tasks, many=True)
+        return Response({
+            'status_code': 200,
+            'message': 'Tasks fetched successfully.',
+            'data': serializer.data
+        }, status=status.HTTP_200_OK)
+
 
 class TaskDeleteView(APIView):
     permission_classes = [IsAuthenticated, IsAdminOrOwner]
