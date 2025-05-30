@@ -4,6 +4,12 @@ from django.contrib.auth.models import AbstractBaseUser, BaseUserManager
 
 # Create your models here.
 
+ROLE_CHOICES = [
+    ('admin', 'Admin'),
+    ('tasksmith', 'Tasksmith'),
+    ('user', 'User'),
+]
+
 class UserManager(BaseUserManager):
     def create_user(self, email, user_name, password=None, **extra_fields):
         '''Creates and saves a User with the given email and password.
@@ -47,13 +53,14 @@ class User(AbstractBaseUser):
     password = models.CharField(max_length=255)
     country = models.CharField(max_length=50, null=True, blank=True)
     state = models.CharField(max_length=50, null=True, blank=True)
-    phone_number = models.CharField(max_length=15, null=True, blank=True)
+    phone_number = models.CharField(max_length=15, null=True, blank=True, unique=True)
     postal_code = models.CharField(max_length=50, null=True, blank=True)
     address = models.TextField(null=True, blank=True)
     is_active = models.BooleanField(default=True)
     image = models.URLField(max_length=500, blank=True, null=True)
     is_paid = models.BooleanField(default=False)
-    role = models.CharField(max_length=50, default='user')
+    # role = models.CharField(max_length=50, default='user')
+    role = models.CharField(max_length=50, choices=ROLE_CHOICES, default='user')
     is_verified = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(null=True, blank=True)
@@ -86,7 +93,7 @@ class EmailVerification(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     deleted_at = models.DateTimeField(blank=True, null=True)
-    deleted_by = models.DateTimeField(blank=True, null=True)
+    deleted_by = models.CharField(max_length=255, blank=True, null=True)
 
     class Meta:
         db_table = 'email_verification'
@@ -99,7 +106,7 @@ class PasswordReset(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     deleted_at = models.DateTimeField(blank=True, null=True)
-    deleted_by = models.DateTimeField(blank=True, null=True)
+    deleted_by = models.CharField(max_length=255, blank=True, null=True)
 
     class Meta:
         db_table = 'password_reset'
