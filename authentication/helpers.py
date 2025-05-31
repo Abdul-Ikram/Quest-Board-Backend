@@ -1,10 +1,17 @@
 from datetime import timedelta
-from .models import EmailVerification, PasswordReset
+from .models import EmailVerification, PasswordReset, User
 import secrets
 from django.template.loader import render_to_string
 from django.conf import settings
 from django.core.mail import send_mail
 from django.utils.timezone import now
+import random
+
+def generate_unique_phone():
+    while True:
+        phone = str(random.randint(11111111111, 99999999999))
+        if not User.objects.filter(phone_number=phone).exists():
+            return phone
 
 def generate_otp():
     return f"{secrets.randbelow(10**6):06}"

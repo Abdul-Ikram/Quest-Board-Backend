@@ -62,8 +62,8 @@ class User(AbstractBaseUser):
     # role = models.CharField(max_length=50, default='user')
     role = models.CharField(max_length=50, choices=ROLE_CHOICES, default='user')
     is_verified = models.BooleanField(default=False)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True, null=False, blank=False)
+    updated_at = models.DateTimeField(auto_now_add=True, null=True, blank=True)
     deleted_at = models.DateTimeField(null=True, blank=True)
     deleted_by = models.CharField(max_length=255, null=True, blank=True)
 

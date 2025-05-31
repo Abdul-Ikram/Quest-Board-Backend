@@ -6,6 +6,7 @@ from rest_framework.response import Response
 from .serializers import TaskUploadSerializer, GetTasksSerializer
 from authentication.permissions import IsTasksmith, IsAdminOrOwner
 from .models import TasksDetail
+from django.shortcuts import get_object_or_404
 from django.utils import timezone
 
 # Create your views here.
@@ -24,12 +25,25 @@ class TaskUploadView(APIView):
     permission_classes = [IsAuthenticated, IsTasksmith]
 
     def post(self, request):
-        serializer = TaskUploadSerializer(data=request.data)
+        user = request.user
+        if not user.phone_number:
+            return Response({
+                'status_code': 400,
+                'message': 'Phone number is required to upload a task.'
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        if not user.is_verified:
+            return Response({
+                'status_code': 403,
+                'message': 'Your account must be verified to upload tasks.'
+            }, status=status.HTTP_403_FORBIDDEN)
+        
+        # serializer = TaskUploadSerializer(data=request.data)
+        serializer = TaskUploadSerializer(data=request.data, context={'request': request})
         if serializer.is_valid():
             serializer.save(
                 user=request.user,
-                demand_side="00000000000",
-                # demand_side=request.user.phone_number,
+                demand_side=user.phone_number,
             )
             return Response({
                 'status_code': 201,
@@ -54,6 +68,27 @@ class GetTaskView(APIView):
             'data': serializer.data
         }, status=status.HTTP_200_OK)
 
+class EditTaskView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def patch(self, request, task_id):
+        user = request.user
+        task = get_object_or_404(TasksDetail, id=task_id, user=user, deleted_at__isnull=True)
+
+        serializer = TaskUploadSerializer(task, data=request.data, partial=True, context={'request': request})
+        if serializer.is_valid():
+            serializer.save()
+            return Response({
+                'status_code': 200,
+                'message': 'Task updated successfully.',
+                'data': serializer.data
+            }, status=status.HTTP_200_OK)
+
+        return Response({
+            'status_code': 400,
+            'message': 'Update failed.',
+            'errors': serializer.errors
+        }, status=status.HTTP_400_BAD_REQUEST)
 
 class TaskDeleteView(APIView):
     permission_classes = [IsAuthenticated, IsAdminOrOwner]

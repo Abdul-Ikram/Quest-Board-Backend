@@ -10,7 +10,7 @@ class TasksDetail(models.Model):
     task_description = models.CharField(max_length=255, null=False, blank=False, default='youtube')
     task_benefit = models.IntegerField(default=0, null=False, blank=False)
     submit_sample = models.URLField(max_length=500, null=True, blank=True)
-    task_url = models.URLField(max_length=500, null=False, blank=False, unique=True)
+    task_url = models.URLField(max_length=500, null=False, blank=False)
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now_add=True)
