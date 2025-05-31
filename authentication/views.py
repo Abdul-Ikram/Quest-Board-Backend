@@ -15,9 +15,8 @@ from rest_framework import status
 from rest_framework.response import Response
 from django.core.validators import validate_email
 # from .helpers import generate_otp, send_email
-from .helpers import send_email
+from .helpers import send_email, generate_unique_phone
 from .serializers import RegisterSerializer, PasswordResetConfirmSerializer
-
 
 # Create your views here.
 
@@ -37,8 +36,10 @@ class RegisterView(APIView):
     permission_classes = [AllowAny]
 
     def post(self, request):
-        serializer = RegisterSerializer(data=request.data)
-
+        # serializer = RegisterSerializer(data=request.data)
+        serializer = RegisterSerializer(data=request.data, context={
+            'phone_number': generate_unique_phone()
+        })
         if serializer.is_valid():
             try:
                 with transaction.atomic():
@@ -50,7 +51,8 @@ class RegisterView(APIView):
                     'user': {
                         'email': user.email, # type: ignore
                         'username': user.username, # type: ignore
-                        'is_verified': user.is_verified # type: ignore
+                        'phone_number': user.phone_number, # type: ignore
+                        'is_verified': user.is_verified, # type: ignore
                     }
                 }, status=status.HTTP_200_OK)
 
