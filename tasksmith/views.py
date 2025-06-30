@@ -43,7 +43,7 @@ class TaskUploadView(APIView):
         if serializer.is_valid():
             serializer.save(
                 user=request.user,
-                demand_side=user.phone_number,
+                # demand_side=user.phone_number,
             )
             return Response({
                 'status_code': 201,
