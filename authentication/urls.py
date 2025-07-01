@@ -10,4 +10,5 @@ urlpatterns = [
     path('delete-all-users/', views.DeleteAllUsersAPIView.as_view(), name='delete-all-users'),
     path('password-reset-request/', views.PasswordResetRequestView.as_view(), name='password_reset_request'),
     path('password-reset-confirm/', views.PasswordResetConfirmView.as_view(), name='password_reset_confirm'),
+    path('edit-profile/<int:pk>/', views.ProfileUpdateView.as_view(), name='edit-profile'),
 ]

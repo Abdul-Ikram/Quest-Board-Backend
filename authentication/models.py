@@ -5,9 +5,14 @@ from django.contrib.auth.models import AbstractBaseUser, BaseUserManager
 # Create your models here.
 
 ROLE_CHOICES = [
-    ('admin', 'Admin'),
     ('tasksmith', 'Tasksmith'),
     ('user', 'User'),
+]
+
+PAYMENT_STATUS_CHOICES = [
+    ('free', 'Free'),
+    ('starter', 'Starter'),
+    ('pro', 'Pro'),
 ]
 
 class UserManager(BaseUserManager):
@@ -55,13 +60,19 @@ class User(AbstractBaseUser):
     state = models.CharField(max_length=50, null=True, blank=True)
     phone_number = models.CharField(max_length=15, null=True, blank=True, unique=True)
     postal_code = models.CharField(max_length=50, null=True, blank=True)
-    address = models.TextField(null=True, blank=True)
+    location = models.TextField(null=True, blank=True)
     is_active = models.BooleanField(default=True)
     image = models.URLField(max_length=500, blank=True, null=True)
-    is_paid = models.BooleanField(default=False)
+    website = models.URLField(max_length=500, blank=True, null=True)
     # role = models.CharField(max_length=50, default='user')
-    role = models.CharField(max_length=50, choices=ROLE_CHOICES, default='user')
+    account_type = models.CharField(max_length=50, choices=ROLE_CHOICES, default='user')
     is_verified = models.BooleanField(default=False)
+    bio = models.TextField(null=True, blank=True)
+    
+    is_paid = models.BooleanField(default=False)
+    payment_status = models.CharField(max_length=20, choices=PAYMENT_STATUS_CHOICES, default='free')
+    amount = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+
     created_at = models.DateTimeField(auto_now_add=True, null=False, blank=False)
     updated_at = models.DateTimeField(auto_now_add=True, null=True, blank=True)
     deleted_at = models.DateTimeField(null=True, blank=True)
