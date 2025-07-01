@@ -7,7 +7,7 @@ class IsTasksmith(BasePermission):
     """
 
     def has_permission(self, request, view):
-        return request.user and request.user.role in ['tasksmith']
+        return request.user and request.user.account_type in ['tasksmith']
         # return request.user and request.user.role in ['admin', 'tasksmith']
 
 
@@ -17,7 +17,7 @@ class IsAdmin(BasePermission):
     """
 
     def has_permission(self, request, view):
-        return request.user and request.user.role in ['admin']
+        return request.user and request.user.account_type in ['admin']
 
 
 class IsAdminOrOwner(BasePermission):
@@ -27,6 +27,6 @@ class IsAdminOrOwner(BasePermission):
 
     def has_object_permission(self, request, view, obj):
         return (
-            request.user.role == 'admin' or
+            request.user.account_type == 'admin' or
             obj.user == request.user
         )

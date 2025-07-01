@@ -6,6 +6,8 @@ from django.conf import settings
 from django.core.mail import send_mail
 from django.utils.timezone import now
 import random
+from requests.auth import HTTPBasicAuth
+import requests
 
 def generate_unique_phone():
     while True:
@@ -71,3 +73,40 @@ def send_email(user, email_type, otp=None):
         recipient_list=[user.email],
         html_message=email_body,
     )
+
+import os
+import mimetypes
+import requests
+from requests.auth import HTTPBasicAuth
+
+def upload_to_imagekit(image_file):
+    imagekit_api_key = os.getenv("IMAGEKIT_PRIVATE_KEY")
+    print(imagekit_api_key)
+    if not imagekit_api_key:
+        raise RuntimeError("Missing ImageKit private key in env var")
+    upload_url = "https://upload.imagekit.io/api/v1/files/upload"
+    # upload_url = ""
+    filename = image_file.name
+    mime = mimetypes.guess_type(filename)[0] or "application/octet-stream"
+    files = {"file": (filename, image_file, mime)}
+    payload = {
+        "fileName": filename,
+        'folder': '/Quest-Board/'
+    }
+
+    resp = requests.post(
+        upload_url,
+        files=files,
+        data=payload,
+        auth=HTTPBasicAuth(imagekit_api_key, "")
+    )
+    try:
+        data = resp.json()
+    except ValueError:
+        raise Exception(f"Non-JSON response: {resp.status_code} {resp.text}")
+
+    if resp.ok and "url" in data:
+        return data["url"]
+    else:
+        err = data.get("error", {}).get("message", resp.text)
+        raise Exception(f"Upload failed ({resp.status_code}): {err}")
