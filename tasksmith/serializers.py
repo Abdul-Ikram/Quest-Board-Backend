@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from .models import TasksDetail, Requirements, Tags
+from authentication.models import User
 
 class RequirementSerializer(serializers.ModelSerializer):
     class Meta:
@@ -76,4 +77,12 @@ class GetTasksSerializer(serializers.ModelSerializer):
             'task_maximum_completions',
             'task_status',
             'created_at',
+        ]
+
+class UserProfileSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = [
+            'id', 'full_name', 'email', 'bio', 'company',
+            'location', 'phone_number', 'website', 'total_tasks', 'tasks_completed', 'wallet_balance',
         ]

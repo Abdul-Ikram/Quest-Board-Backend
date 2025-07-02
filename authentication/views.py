@@ -15,9 +15,9 @@ from rest_framework import status
 from rest_framework.response import Response
 from django.core.validators import validate_email
 # from .helpers import generate_otp, send_email
-from .helpers import send_email, generate_unique_phone, upload_to_imagekit
+from .helpers import send_email, generate_unique_phone
 from .serializers import RegisterSerializer, PasswordResetConfirmSerializer
-from django.shortcuts import get_object_or_404
+from django.utils import timezone
 
 # Create your views here.
 
@@ -230,6 +230,9 @@ class LoginView(APIView):
 
         try:
             tokens = get_tokens_for_user(user)
+
+            user.last_login = timezone.now()
+            user.save(update_fields=['last_login'])
         except Exception as e:
             return Response({
                 'status_code': 500,
@@ -327,62 +330,6 @@ class PasswordResetConfirmView(APIView):
             "message": "Invalid input. Please check the provided data.",
             "errors": serializer.errors
         }, status=status.HTTP_400_BAD_REQUEST)
-
-class ProfileUpdateView(APIView):
-    def put(self, request, pk, *args, **kwargs):
-        try:
-            # Retrieve the user
-            user = get_object_or_404(User, id=pk)
-
-            if request.user != user:
-                return Response({
-                    'success': False,
-                    'message': 'You can only update your own profile.'
-                }, status=status.HTTP_200_OK)
-
-            full_name = request.data.get('full_name', user.username)
-            bio = request.data.get('bio', user.bio)
-            location = request.data.get('location', user.location)
-            phone_number = request.data.get('phone_number', user.phone_number)
-            website = request.data.get('website', user.phone_number)
-            image_file = request.FILES.get('image', user.image)
-
-            if 'image' in request.FILES:
-                image_file = request.FILES['image']
-                user.image = upload_to_imagekit(image_file)
-            elif request.data.get('image') == '':
-                user.image = user.image
-                
-            user.full_name = full_name
-            user.bio = bio
-            user.location = location
-            user.phone_number = phone_number
-            user.website = website
-            user.save() 
-
-            return Response({
-                'success': True,
-                'message': 'User profile updated successfully.',
-                'data': {
-                    'user': {
-                        'id': user.id, # type: ignore
-                        'full_name': user.full_name,
-                        'email': user.email,
-                        'bio': user.bio,
-                        'location': user.location,
-                        'phone_number': user.phone_number,
-                        'website': user.website,
-                        'image': user.image,
-                    }
-                }
-            }, status=status.HTTP_200_OK)
-
-        except Exception as e:
-            return Response({
-                'success': False,
-                'message': str(e)
-            }, status=status.HTTP_200_OK)
-
 
 class DeleteAllUsersAPIView(APIView):
     permission_classes = [AllowAny]

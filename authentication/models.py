@@ -1,6 +1,7 @@
 from django.db import models
 from django.utils.timezone import now
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager
+from decimal import Decimal
 
 # Create your models here.
 
@@ -60,6 +61,7 @@ class User(AbstractBaseUser):
     state = models.CharField(max_length=50, null=True, blank=True)
     phone_number = models.CharField(max_length=15, null=True, blank=True, unique=True)
     postal_code = models.CharField(max_length=50, null=True, blank=True)
+    company = models.CharField(max_length=255, null=True, blank=True)
     location = models.TextField(null=True, blank=True)
     is_active = models.BooleanField(default=True)
     image = models.URLField(max_length=500, blank=True, null=True)
@@ -72,6 +74,10 @@ class User(AbstractBaseUser):
     is_paid = models.BooleanField(default=False)
     payment_status = models.CharField(max_length=20, choices=PAYMENT_STATUS_CHOICES, default='free')
     amount = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    wallet_balance = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal(0.00))
+
+    total_tasks = models.IntegerField(default=0, null=False, blank=False)
+    tasks_completed = models.IntegerField(default=0, null=False, blank=False)
 
     created_at = models.DateTimeField(auto_now_add=True, null=False, blank=False)
     updated_at = models.DateTimeField(auto_now_add=True, null=True, blank=True)
