@@ -3,11 +3,13 @@ from rest_framework.views import APIView
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework import status
 from rest_framework.response import Response
-from .serializers import TaskUploadSerializer, GetTasksSerializer
+from .serializers import TaskUploadSerializer, GetTasksSerializer, UserProfileSerializer 
 from authentication.permissions import IsTasksmith, IsAdminOrOwner
 from .models import TasksDetail
+from authentication.models import User
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
+from authentication.helpers import upload_to_imagekit
 
 # Create your views here.
 
@@ -111,5 +113,77 @@ class TaskDeleteView(APIView):
             'message': 'Task deleted successfully.',
             'data': {
                 "task_deleted_by": task.deleted_by,
+            }
+        }, status=status.HTTP_200_OK)
+
+class ProfileUpdateView(APIView):
+    def put(self, request, pk, *args, **kwargs):
+        try:
+            # Retrieve the user
+            user = get_object_or_404(User, id=pk)
+
+            if request.user != user:
+                return Response({
+                    'success': False,
+                    'message': 'You can only update your own profile.'
+                }, status=status.HTTP_200_OK)
+
+            full_name = request.data.get('full_name', user.username)
+            bio = request.data.get('bio', user.bio)
+            location = request.data.get('location', user.location)
+            phone_number = request.data.get('phone_number', user.phone_number)
+            website = request.data.get('website', user.website)
+            company = request.data.get('website', user.company)
+            image_file = request.FILES.get('image', user.image)
+
+            if 'image' in request.FILES:
+                image_file = request.FILES['image']
+                user.image = upload_to_imagekit(image_file)
+            elif request.data.get('image') == '':
+                user.image = user.image
+                
+            user.full_name = full_name
+            user.bio = bio
+            user.location = location
+            user.phone_number = phone_number
+            user.website = website
+            user.company = company
+            user.save()
+
+            return Response({
+                'success': True,
+                'message': 'User profile updated successfully.',
+                'data': {
+                    'user': {
+                        'id': user.id, # type: ignore
+                        'full_name': user.full_name,
+                        'email': user.email,
+                        'bio': user.bio,
+                        'location': user.location,
+                        'company': user.company,
+                        'phone_number': user.phone_number,
+                        'website': user.website,
+                        'image': user.image,
+                    }
+                }
+            }, status=status.HTTP_200_OK)
+
+        except Exception as e:
+            return Response({
+                'success': False,
+                'message': str(e)
+            }, status=status.HTTP_200_OK)
+
+class GetProfileView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+        serializer = UserProfileSerializer(user)
+        return Response({
+            'status_code': 200,
+            'message': 'Profile retrieved successfully.',
+            'data': {
+                'user': serializer.data
             }
         }, status=status.HTTP_200_OK)
