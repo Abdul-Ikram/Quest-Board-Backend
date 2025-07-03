@@ -9,4 +9,5 @@ urlpatterns = [
     path('delete-task/<int:task_id>/', views.TaskDeleteView.as_view(), name='delete_task'),
     path('edit-profile/<int:pk>/', views.ProfileUpdateView.as_view(), name='edit-profile'),
     path('get-profile/', views.GetProfileView.as_view(), name='get-profile'),
+    path('dashboard/', views.DashboardView.as_view(), name='dashboard'),
 ]
