@@ -3,6 +3,17 @@ from authentication.models import User
 
 # Create your models here.
 
+TASK_STATUSES = [
+    ('pending', 'Pending'),
+    ('approved', 'Approved'),
+    ('review', 'Review'),
+    ('completed', 'Completed'),
+    ('in_progress', 'InProgress'),
+    ('submitted', 'Submitted'),
+    ('completed', 'Completed'),
+    ('rejected', 'Rejected'),
+]
+
 class Tags(models.Model):
     name = models.CharField(max_length=50)
 
@@ -37,7 +48,7 @@ class TasksDetail(models.Model):
     task_requirements = models.ManyToManyField(Requirements, blank=True)
     task_tags = models.ManyToManyField(Tags, blank=True)
     task_maximum_completions = models.IntegerField(null=True, blank=True, default=1)
-    task_status = models.CharField(max_length=100, null=False, blank=False, default='pending')
+    task_status = models.CharField(max_length=100, null=False, blank=False, choices=TASK_STATUSES, default='pending')
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now_add=True)

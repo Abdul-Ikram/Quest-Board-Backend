@@ -71,7 +71,7 @@ class GetTaskView(APIView):
         }, status=status.HTTP_200_OK)
 
 class EditTaskView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsTasksmith]
 
     def patch(self, request, task_id):
         user = request.user
@@ -117,6 +117,8 @@ class TaskDeleteView(APIView):
         }, status=status.HTTP_200_OK)
 
 class ProfileUpdateView(APIView):
+    permission_classes = [IsAuthenticated, IsTasksmith]
+
     def put(self, request, pk, *args, **kwargs):
         try:
             # Retrieve the user
@@ -175,7 +177,7 @@ class ProfileUpdateView(APIView):
             }, status=status.HTTP_200_OK)
 
 class GetProfileView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsTasksmith]
 
     def get(self, request):
         user = request.user
@@ -185,5 +187,79 @@ class GetProfileView(APIView):
             'message': 'Profile retrieved successfully.',
             'data': {
                 'user': serializer.data
+            }
+        }, status=status.HTTP_200_OK)
+
+
+class ChangePasswordView(APIView):
+    """
+    Allow authenticated users to change their password securely.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def put(self, request):
+        user = request.user
+        data = request.data
+
+        current_password = data.get("current_password")
+        new_password = data.get("new_password")
+        confirm_password = data.get("confirm_password")
+
+        if not current_password or not new_password or not confirm_password:
+            return Response({
+                'success': False,
+                'message': 'All fields (current_password, new_password, confirm_password) are required.'
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        if not user.check_password(current_password):
+            return Response({
+                'success': False,
+                'message': 'Current password is incorrect.'
+            }, status=status.HTTP_401_UNAUTHORIZED)
+
+        if new_password != confirm_password:
+            return Response({
+                'success': False,
+                'message': 'New password and confirmation do not match.'
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        if user.check_password(new_password):
+            return Response({
+                'success': False,
+                'message': 'New password cannot be the same as the current password.'
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        user.set_password(new_password)
+        user.save()
+
+        return Response({
+            'success': True,
+            'message': 'Your password has been updated successfully.'
+        }, status=status.HTTP_200_OK)
+
+class DashboardView(APIView):
+    """
+    Return task statistics for the authenticated user, excluding deleted tasks.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+        user_tasks = TasksDetail.objects.filter(user=user, deleted_at__isnull=True)
+
+        # Task counts by status
+        total_tasks = user_tasks.count()
+        pending_tasks = user_tasks.filter(task_status='pending').count()
+        review_tasks = user_tasks.filter(task_status='review').count()
+        completed_tasks = user_tasks.filter(task_status='completed').count()
+
+        return Response({
+            'success': True,
+            'message': 'Dashboard stats fetched successfully.',
+            'data': {
+                'total_tasks': total_tasks,
+                'pending_tasks': pending_tasks,
+                'review_tasks': review_tasks,
+                'completed_tasks': completed_tasks
             }
         }, status=status.HTTP_200_OK)
