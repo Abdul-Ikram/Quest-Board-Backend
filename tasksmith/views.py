@@ -3,13 +3,14 @@ from rest_framework.views import APIView
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework import status
 from rest_framework.response import Response
-from .serializers import TaskUploadSerializer, GetTasksSerializer, UserProfileSerializer 
+from .serializers import TaskUploadSerializer, GetTasksSerializer, UserProfileSerializer
 from authentication.permissions import IsTasksmith, IsAdminOrOwner
 from .models import TasksDetail
-from authentication.models import User
+from authentication.models import User, Specialty
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from authentication.helpers import upload_to_imagekit
+from django.db import models
 
 # Create your views here.
 
@@ -116,41 +117,117 @@ class TaskDeleteView(APIView):
             }
         }, status=status.HTTP_200_OK)
 
+# class ProfileUpdateView(APIView):
+#     permission_classes = [IsAuthenticated, IsTasksmith]
+
+#     def put(self, request, pk, *args, **kwargs):
+#         try:
+#             user = get_object_or_404(User, id=pk)
+
+#             if request.user != user:
+#                 return Response({
+#                     'success': False,
+#                     'message': 'You can only update your own profile.'
+#                 }, status=status.HTTP_200_OK)
+
+#             full_name = request.data.get('full_name', user.username)
+#             bio = request.data.get('bio', user.bio)
+#             location = request.data.get('location', user.location)
+#             phone_number = request.data.get('phone_number', user.phone_number)
+#             website = request.data.get('website', user.website)
+#             company = request.data.get('website', user.company)
+#             image_file = request.FILES.get('image', user.image)
+
+#             if 'image' in request.FILES:
+#                 image_file = request.FILES['image']
+#                 user.image = upload_to_imagekit(image_file)
+#             elif request.data.get('image') == '':
+#                 user.image = user.image
+                
+#             user.full_name = full_name
+#             user.bio = bio
+#             user.location = location
+#             user.phone_number = phone_number
+#             user.website = website
+#             user.company = company
+#             user.save()
+
+#             return Response({
+#                 'success': True,
+#                 'message': 'User profile updated successfully.',
+#                 'data': {
+#                     'user': {
+#                         'id': user.id, # type: ignore
+#                         'full_name': user.full_name,
+#                         'email': user.email,
+#                         'bio': user.bio,
+#                         'location': user.location,
+#                         'company': user.company,
+#                         'phone_number': user.phone_number,
+#                         'website': user.website,
+#                         'image': user.image,
+#                     }
+#                 }
+#             }, status=status.HTTP_200_OK)
+
+#         except Exception as e:
+#             return Response({
+#                 'success': False,
+#                 'message': str(e)
+#             }, status=status.HTTP_200_OK)
+
 class ProfileUpdateView(APIView):
     permission_classes = [IsAuthenticated, IsTasksmith]
 
     def put(self, request, pk, *args, **kwargs):
         try:
-            # Retrieve the user
             user = get_object_or_404(User, id=pk)
 
             if request.user != user:
                 return Response({
                     'success': False,
                     'message': 'You can only update your own profile.'
-                }, status=status.HTTP_200_OK)
+                }, status=status.HTTP_403_FORBIDDEN)
 
-            full_name = request.data.get('full_name', user.username)
+            full_name = request.data.get('full_name', user.full_name)
             bio = request.data.get('bio', user.bio)
             location = request.data.get('location', user.location)
             phone_number = request.data.get('phone_number', user.phone_number)
             website = request.data.get('website', user.website)
-            company = request.data.get('website', user.company)
-            image_file = request.FILES.get('image', user.image)
+            company = request.data.get('company', user.company)
+            specialties_data = request.data.getlist('specialties', [])  # Expecting a list
+            image_file = request.FILES.get('image', None)
 
-            if 'image' in request.FILES:
-                image_file = request.FILES['image']
+            # Handle image upload
+            if image_file:
                 user.image = upload_to_imagekit(image_file)
             elif request.data.get('image') == '':
-                user.image = user.image
-                
+                user.image = None
+
+            # Update basic fields
             user.full_name = full_name
             user.bio = bio
             user.location = location
             user.phone_number = phone_number
             user.website = website
             user.company = company
+
             user.save()
+
+            if isinstance(specialties_data, list):
+                new_specialties = []
+                for specialty_name in specialties_data:
+                    specialty_name = specialty_name.strip()
+                    if specialty_name:
+                        specialty_obj, _ = Specialty.objects.get_or_create(name=specialty_name)
+                        new_specialties.append(specialty_obj)
+
+                # Replace old with new
+                user.specialties.set(new_specialties)
+
+                # Delete specialties no longer used by any user
+                Specialty.objects.annotate(user_count=models.Count('user')).filter(user_count=0).delete()
+
 
             return Response({
                 'success': True,
@@ -166,6 +243,7 @@ class ProfileUpdateView(APIView):
                         'phone_number': user.phone_number,
                         'website': user.website,
                         'image': user.image,
+                        'specialties': [s.name for s in user.specialties.all()]
                     }
                 }
             }, status=status.HTTP_200_OK)
@@ -173,8 +251,9 @@ class ProfileUpdateView(APIView):
         except Exception as e:
             return Response({
                 'success': False,
-                'message': str(e)
-            }, status=status.HTTP_200_OK)
+                'message': f"Profile update failed: {str(e)}"
+            }, status=status.HTTP_400_BAD_REQUEST)
+
 
 class GetProfileView(APIView):
     permission_classes = [IsAuthenticated, IsTasksmith]

@@ -10,11 +10,13 @@ ROLE_CHOICES = [
     ('user', 'User'),
 ]
 
+
 PAYMENT_STATUS_CHOICES = [
     ('free', 'Free'),
     ('starter', 'Starter'),
     ('pro', 'Pro'),
 ]
+
 
 class UserManager(BaseUserManager):
     def create_user(self, email, user_name, password=None, **extra_fields):
@@ -49,6 +51,17 @@ class UserManager(BaseUserManager):
     def get_queryset(self):
         return super().get_queryset().filter(deleted_at__isnull=True)
 
+
+class Specialty(models.Model):
+    name = models.CharField(max_length=50, unique=True)
+
+    class Meta:
+        db_table = 'user_specialties'
+
+    def __str__(self):
+        return self.name
+
+
 class User(AbstractBaseUser):
     username = models.CharField(max_length=255)
     auth_id = models.CharField(max_length=255, default="True")
@@ -70,6 +83,7 @@ class User(AbstractBaseUser):
     account_type = models.CharField(max_length=50, choices=ROLE_CHOICES, default='user')
     is_verified = models.BooleanField(default=False)
     bio = models.TextField(null=True, blank=True)
+    specialties = models.ManyToManyField(Specialty, blank=True)
     
     is_paid = models.BooleanField(default=False)
     payment_status = models.CharField(max_length=20, choices=PAYMENT_STATUS_CHOICES, default='free')
@@ -102,6 +116,7 @@ class User(AbstractBaseUser):
         self.deleted_by = admin_email
         self.save()
 
+
 class EmailVerification(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     otp = models.CharField(max_length=6)
@@ -114,7 +129,8 @@ class EmailVerification(models.Model):
 
     class Meta:
         db_table = 'email_verification'
-    
+
+
 class PasswordReset(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     otp = models.CharField(max_length=6)

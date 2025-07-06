@@ -80,9 +80,17 @@ class GetTasksSerializer(serializers.ModelSerializer):
         ]
 
 class UserProfileSerializer(serializers.ModelSerializer):
+    specialties = serializers.SlugRelatedField(
+        many=True,
+        read_only=True,
+        slug_field='name'
+    )
+
     class Meta:
         model = User
         fields = [
             'id', 'full_name', 'email', 'bio', 'company',
-            'location', 'phone_number', 'website', 'total_tasks', 'tasks_completed', 'wallet_balance',
+            'location', 'phone_number', 'website',
+            'total_tasks', 'tasks_completed', 'wallet_balance',
+            'specialties'
         ]
